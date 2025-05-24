@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
 body {
-  @apply bg-gray-500;
+  @apply bg-gradient-to-br from-orange-400 via-white to-orange-600 min-h-screen flex items-center justify-center transition-colors duration-700;
+  /* Effetto ombra e testo */
+  color: black;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
