@@ -41,6 +41,10 @@ export default function App() {
 		{}
 	);
 	const [uniqueRowsCount, setUniqueRowsCount] = useState(0);
+	const [preferredBrands, setPreferredBrands] = useState<string[]>(() => {
+		const saved = localStorage.getItem("preferredBrands");
+		return saved ? JSON.parse(saved) : [];
+	});
 
 	function handleFileSelect(e: FileUploadSelectEvent) {
 		const file = e.files?.[0];
@@ -115,7 +119,13 @@ export default function App() {
 				new Set(uniqueRows.map((r) => r[3]).filter(Boolean))
 			);
 			const brandMap: Record<string, boolean> = {};
-			brands.forEach((b) => (brandMap[b] = false));
+			brands.forEach((b) => (brandMap[b] = false)); // Seleziona automaticamente le marche preferite se presenti
+			preferredBrands.forEach((brand) => {
+				if (brands.includes(brand)) {
+					brandMap[brand] = true;
+				}
+			});
+
 			setBrandSelection(brandMap);
 		};
 		reader.readAsText(file, "utf-8");
@@ -124,13 +134,36 @@ export default function App() {
 	function toggleBrand(brand: string) {
 		setBrandSelection((s) => ({ ...s, [brand]: !s[brand] }));
 	}
-
+	function setAndSavePreferredBrand(brand: string) {
+		// Se è già tra le preferite, la togliamo dalle preferenze
+		if (preferredBrands.includes(brand)) {
+			const updatedBrands = preferredBrands.filter((b) => b !== brand);
+			setPreferredBrands(updatedBrands);
+			localStorage.setItem("preferredBrands", JSON.stringify(updatedBrands));
+		} else {
+			// Altrimenti, la aggiungiamo alle preferite
+			const updatedBrands = [...preferredBrands, brand];
+			setPreferredBrands(updatedBrands);
+			localStorage.setItem("preferredBrands", JSON.stringify(updatedBrands));
+		}
+	}
 	const filteredBrands = useMemo(() => {
 		const search = brandFilter.toLowerCase();
-		return Object.keys(brandSelection).filter((b) =>
+		// Prima filtriamo in base alla ricerca
+		const filtered = Object.keys(brandSelection).filter((b) =>
 			b.toLowerCase().includes(search)
 		);
-	}, [brandSelection, brandFilter]);
+		// Poi ordiniamo con i preferiti in cima
+		return filtered.sort((a, b) => {
+			// Se uno è preferito e l'altro no, il preferito va prima
+			const aPreferred = preferredBrands.includes(a);
+			const bPreferred = preferredBrands.includes(b);
+			if (aPreferred && !bPreferred) return -1;
+			if (!aPreferred && bPreferred) return 1;
+			// Altrimenti ordine alfabetico
+			return a.localeCompare(b);
+		});
+	}, [brandSelection, brandFilter, preferredBrands]);
 
 	const selectedBrands = useMemo(
 		() =>
@@ -165,6 +198,43 @@ export default function App() {
 		a.download = "filtrato.txt";
 		a.click();
 		URL.revokeObjectURL(url);
+	}
+
+	// Funzione per esportare i brand preferiti
+	function exportPreferredBrands() {
+		const data = JSON.stringify(preferredBrands);
+		const blob = new Blob([data], { type: "application/json" });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = "marche_preferite.json";
+		a.click();
+		URL.revokeObjectURL(url);
+	}
+
+	// Funzione per importare i brand preferiti da file
+	function importPreferredBrands(e: React.ChangeEvent<HTMLInputElement>) {
+		const file = e.target.files?.[0];
+		if (!file) return;
+
+		const reader = new FileReader();
+		reader.onload = (event) => {
+			try {
+				const content = event.target?.result as string;
+				const brands = JSON.parse(content) as string[];
+
+				if (Array.isArray(brands)) {
+					setPreferredBrands(brands);
+					localStorage.setItem("preferredBrands", JSON.stringify(brands));
+					alert("Marche preferite importate con successo!");
+				} else {
+					alert("Il file selezionato non contiene un formato valido");
+				}
+			} catch (error) {
+				alert("Errore durante l'importazione: " + error);
+			}
+		};
+		reader.readAsText(file);
 	}
 
 	return (
@@ -218,6 +288,37 @@ export default function App() {
 				</div>
 			</div>
 
+			{/* Sezione per esportare/importare preferenze */}
+			<div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex flex-col sm:flex-row gap-4 justify-center items-center">
+				<div className="text-yellow-700 flex items-center gap-2">
+					<span role="img" aria-label="Star">
+						⭐
+					</span>
+					<span className="font-semibold">Preferenze delle marche</span>
+				</div>
+				<div className="flex gap-2">
+					<Button
+						label="Esporta preferenze"
+						icon="pi pi-download"
+						className="p-button-outlined p-button-warning p-button-sm"
+						onClick={exportPreferredBrands}
+						disabled={preferredBrands.length === 0}
+						tooltip="Scarica le tue marche preferite"
+						tooltipOptions={{ position: "bottom" }}
+					/>
+					<label className="p-button p-button-outlined p-button-info p-button-sm flex items-center justify-center cursor-pointer">
+						<input
+							type="file"
+							accept=".json"
+							onChange={importPreferredBrands}
+							style={{ display: "none" }}
+						/>
+						<i className="pi pi-upload mr-2"></i>
+						Importa preferenze
+					</label>
+				</div>
+			</div>
+
 			<div className="mb-6">
 				<h4 className="font-semibold mb-3 text-lg flex items-center gap-2">
 					<span role="img" aria-label="Filtro">
@@ -258,13 +359,34 @@ export default function App() {
 							}`}
 							style={filteredBrands.length <= 3 ? { minHeight: "48px" } : {}}
 						>
+							<Button
+								type="button"
+								icon={
+									preferredBrands.includes(brand)
+										? "pi pi-star-fill"
+										: "pi pi-star"
+								}
+								className={`p-button-text p-button-sm ml-auto ${
+									preferredBrands.includes(brand)
+										? "text-yellow-500"
+										: "text-gray-400"
+								}`}
+								onClick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									setAndSavePreferredBrand(brand);
+								}}
+								aria-label="Imposta come preferita"
+								tooltip="Imposta come marca preferita"
+								tooltipOptions={{ position: "top" }}
+							/>
 							<Checkbox
 								id={`brand-${brand}`}
 								onChange={() => toggleBrand(brand)}
 								checked={brandSelection[brand]}
 								className="mr-2"
 							/>
-							<span className="truncate">{brand}</span>
+							<span className="truncate flex-grow">{brand}</span>
 						</label>
 					))}
 					{/* Filler per mantenere l'altezza minima se pochi risultati */}
