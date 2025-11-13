@@ -67,8 +67,13 @@ export default function App() {
 				const row = parseLine(line);
 
 				const prezzoListinoIdx = 6;
+				const prezzoNettoIdx = 11;
 				const moltiplicatoreIdx = 20;
+				const ivaIdx = 13;
 				const prezzoListinoRaw = row[prezzoListinoIdx]
+					.replace(",", ".")
+					.replace(/\s/g, "");
+				const prezzoNettoRaw = row[prezzoNettoIdx]
 					.replace(",", ".")
 					.replace(/\s/g, "");
 				const moltiplicatoreRaw = row[moltiplicatoreIdx]
@@ -76,28 +81,86 @@ export default function App() {
 					.replace(/\s/g, "");
 
 				const prezzoListino = parseFloat(prezzoListinoRaw);
+				const prezzoNetto = parseFloat(prezzoNettoRaw);
 				const moltiplicatore = parseFloat(moltiplicatoreRaw);
 
 				let newRow = [...row]; // Copia della riga per sicurezza
 				let modifiedLine = line;
+
+				// Rimuovi il campo IVA (svuotalo)
+				const [__, ivaStart, ivaEnd] = FIELDS[ivaIdx];
+				const ivaVuota = "".padStart(ivaEnd - ivaStart, " ");
+				modifiedLine =
+					modifiedLine.slice(0, ivaStart) +
+					ivaVuota +
+					modifiedLine.slice(ivaEnd);
+				newRow[ivaIdx] = "";
+
+				// Gestione prezzo listino
+				const [_, start, end] = FIELDS[prezzoListinoIdx];
 
 				if (
 					!isNaN(prezzoListino) &&
 					!isNaN(moltiplicatore) &&
 					moltiplicatore > 1
 				) {
+					// Calcola il nuovo prezzo listino
 					const nuovoPrezzo = (prezzoListino / moltiplicatore)
 						.toFixed(2)
 						.replace(".", ",");
 
 					// Aggiorna solo la parte del prezzo nella riga originale mantenendo la lunghezza
-					const [_, start, end] = FIELDS[prezzoListinoIdx];
 					const prezzoFormattato = nuovoPrezzo.padStart(end - start, " ");
 					modifiedLine =
-						line.slice(0, start) + prezzoFormattato + line.slice(end);
+						modifiedLine.slice(0, start) +
+						prezzoFormattato +
+						modifiedLine.slice(end);
 
 					// Aggiorna anche il campo nella riga parsata (per la tabella visiva)
 					newRow[prezzoListinoIdx] = nuovoPrezzo;
+				} else if (!prezzoListinoRaw || prezzoListinoRaw === "") {
+					// Se il prezzo listino è vuoto, rimuovilo (sostituisci con spazi)
+					const prezzoVuoto = "".padStart(end - start, " ");
+					modifiedLine =
+						modifiedLine.slice(0, start) +
+						prezzoVuoto +
+						modifiedLine.slice(end);
+					newRow[prezzoListinoIdx] = "";
+				}
+
+				// Gestione prezzo netto
+				const [_n, startNetto, endNetto] = FIELDS[prezzoNettoIdx];
+
+				if (
+					!isNaN(prezzoNetto) &&
+					!isNaN(moltiplicatore) &&
+					moltiplicatore > 1
+				) {
+					// Calcola il nuovo prezzo netto
+					const nuovoPrezzoNetto = (prezzoNetto / moltiplicatore)
+						.toFixed(2)
+						.replace(".", ",");
+
+					// Aggiorna solo la parte del prezzo netto nella riga originale mantenendo la lunghezza
+					const prezzoNettoFormattato = nuovoPrezzoNetto.padStart(
+						endNetto - startNetto,
+						" "
+					);
+					modifiedLine =
+						modifiedLine.slice(0, startNetto) +
+						prezzoNettoFormattato +
+						modifiedLine.slice(endNetto);
+
+					// Aggiorna anche il campo nella riga parsata (per la tabella visiva)
+					newRow[prezzoNettoIdx] = nuovoPrezzoNetto;
+				} else if (!prezzoNettoRaw || prezzoNettoRaw === "") {
+					// Se il prezzo netto è vuoto, rimuovilo (sostituisci con spazi)
+					const prezzoNettoVuoto = "".padStart(endNetto - startNetto, " ");
+					modifiedLine =
+						modifiedLine.slice(0, startNetto) +
+						prezzoNettoVuoto +
+						modifiedLine.slice(endNetto);
+					newRow[prezzoNettoIdx] = "";
 				}
 
 				parsed.push(newRow);
@@ -111,18 +174,35 @@ export default function App() {
 			const uniqueRows: string[][] = [];
 
 			for (let row of parsed) {
-				const marcaMetel = row[14]; // Marca Metel
-				const articoloMetel = row[15]; // Articolo Metel
+				const marcaMetel = row[14].trim(); // Marca Metel
+				const articoloMetel = row[15].trim(); // Articolo Metel
 
-				// Se entrambi i campi sono non vuoti, crea una chiave univoca
+				// Se la marca Metel è vuota, rimuovi la riga
+				if (!marcaMetel) {
+					console.log("Riga rimossa (Marca Metel vuota):", row);
+					continue;
+				}
+
+				// Se l'articolo Metel è vuoto, rimuovi la riga
+				if (!articoloMetel) {
+					console.log("Riga rimossa (Articolo Metel vuoto):", row);
+					continue;
+				}
+
+				// Se entrambi i campi sono non vuoti, controlla duplicati
 				if (marcaMetel && articoloMetel) {
 					const key = `${marcaMetel}|${articoloMetel}`;
-					
-					// Se questa combinazione è già stata vista, scarta la riga
+
+					// Se questa combinazione è già stata vista, stampa in console e scarta
 					if (seenCombinations.has(key)) {
+						console.log("Doppione trovato:", {
+							marcaMetel,
+							articoloMetel,
+							riga: row,
+						});
 						continue;
 					}
-					
+
 					// Aggiungi la combinazione al set
 					seenCombinations.add(key);
 				}
