@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 body {
-  @apply bg-gradient-to-br from-orange-400 via-white to-orange-600 min-h-screen flex items-center justify-center transition-colors duration-700;
-  /* Effetto ombra e testo */
+  @apply bg-gradient-to-br from-blue-500 via-blue-300 to-blue-600 min-h-screen flex items-center justify-center transition-colors duration-700;
   color: black;
   text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Dark theme */
+.dark body {
+  @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900;
+  color: white;
+  text-shadow: 0 2px 8px rgba(255,255,255,0.1);
 }

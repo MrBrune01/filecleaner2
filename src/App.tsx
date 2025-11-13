@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
 import { FileUpload, type FileUploadSelectEvent } from "primereact/fileupload";
+import { useTheme } from "./hooks/useTheme";
 
 type Field = [string, start: number, end: number];
 
@@ -34,6 +35,7 @@ function parseLine(line: string): string[] {
 }
 
 export default function App() {
+	const { theme, toggleTheme } = useTheme();
 	const [parsedData, setParsedData] = useState<string[][]>([]);
 	const [originalLines, setOriginalLines] = useState<string[]>([]);
 	const [brandFilter, setBrandFilter] = useState<string>("");
@@ -134,6 +136,23 @@ export default function App() {
 	function toggleBrand(brand: string) {
 		setBrandSelection((s) => ({ ...s, [brand]: !s[brand] }));
 	}
+
+	function selectAllBrands() {
+		const allBrands: Record<string, boolean> = {};
+		Object.keys(brandSelection).forEach((brand) => {
+			allBrands[brand] = true;
+		});
+		setBrandSelection(allBrands);
+	}
+
+	function deselectAllBrands() {
+		const allBrands: Record<string, boolean> = {};
+		Object.keys(brandSelection).forEach((brand) => {
+			allBrands[brand] = false;
+		});
+		setBrandSelection(allBrands);
+	}
+
 	function setAndSavePreferredBrand(brand: string) {
 		// Se è già tra le preferite, la togliamo dalle preferenze
 		if (preferredBrands.includes(brand)) {
@@ -240,57 +259,66 @@ export default function App() {
 	return (
 		<div className="p-2 max-w-5xl mx-auto">
 			<div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-				<h2 className="text-2xl font-bold flex items-center gap-2">
+				<h2 className="text-2xl font-bold flex items-center gap-2 dark:text-white">
 					<span role="img" aria-label="Broom">
 						🧹
 					</span>
 					Pulizia File
 				</h2>
-				<FileUpload
-					mode="basic"
-					name="demo[]"
-					accept=".txt"
-					onSelect={handleFileSelect}
-					chooseLabel="Carica File"
-					className="p-button-outlined"
-				/>
-				<Button
-					label="Salva come TXT"
-					onClick={exportTXT}
-					className="p-button-lg p-button-success"
-					disabled={parsedData.length === 0}
-					icon="pi pi-download"
-				/>
+				<div className="flex gap-2 items-center flex-wrap">
+					<Button
+						icon={theme === "dark" ? "pi pi-sun" : "pi pi-moon"}
+						onClick={toggleTheme}
+						className="p-button-rounded p-button-text"
+						tooltip={theme === "dark" ? "Tema chiaro" : "Tema scuro"}
+						tooltipOptions={{ position: "bottom" }}
+					/>
+					<FileUpload
+						mode="basic"
+						name="demo[]"
+						accept=".txt"
+						onSelect={handleFileSelect}
+						chooseLabel="Carica File"
+						className="p-button-outlined"
+					/>
+					<Button
+						label="Salva come TXT"
+						onClick={exportTXT}
+						className="p-button-lg p-button-success"
+						disabled={parsedData.length === 0}
+						icon="pi pi-download"
+					/>
+				</div>
 			</div>
 
 			<div className="mb-6 flex flex-col sm:flex-row gap-4">
-				<div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex-1 flex flex-col items-center shadow-sm">
-					<p className="text-blue-700 text-lg font-semibold flex items-center gap-2">
+				<div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4 flex-1 flex flex-col items-center shadow-sm">
+					<p className="text-blue-700 dark:text-blue-300 text-lg font-semibold flex items-center gap-2">
 						<span role="img" aria-label="Unique">
 							🔗
 						</span>
 						Righe uniche dopo pulizia:
 					</p>
-					<p className="text-3xl font-bold text-blue-900 mt-1">
+					<p className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-1">
 						{uniqueRowsCount}
 					</p>
 				</div>
-				<div className="bg-green-50 border border-green-200 rounded-lg p-4 flex-1 flex flex-col items-center shadow-sm">
-					<p className="text-green-700 text-lg font-semibold flex items-center gap-2">
+				<div className="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg p-4 flex-1 flex flex-col items-center shadow-sm">
+					<p className="text-green-700 dark:text-green-300 text-lg font-semibold flex items-center gap-2">
 						<span role="img" aria-label="Visible">
 							👁️
 						</span>
 						Righe visibili (dopo filtro):
 					</p>
-					<p className="text-3xl font-bold text-green-900 mt-1">
+					<p className="text-3xl font-bold text-green-900 dark:text-green-100 mt-1">
 						{filteredData.length}
 					</p>
 				</div>
 			</div>
 
 			{/* Sezione per esportare/importare preferenze */}
-			<div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex flex-col sm:flex-row gap-4 justify-center items-center">
-				<div className="text-yellow-700 flex items-center gap-2">
+			<div className="mb-4 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 flex flex-col sm:flex-row gap-4 justify-center items-center">
+				<div className="text-yellow-700 dark:text-yellow-300 flex items-center gap-2">
 					<span role="img" aria-label="Star">
 						⭐
 					</span>
@@ -320,7 +348,7 @@ export default function App() {
 			</div>
 
 			<div className="mb-6">
-				<h4 className="font-semibold mb-3 text-lg flex items-center gap-2">
+				<h4 className="font-semibold mb-3 text-lg flex items-center gap-2 dark:text-white">
 					<span role="img" aria-label="Filtro">
 						🔍
 					</span>
@@ -331,11 +359,28 @@ export default function App() {
 					placeholder="Cerca marca..."
 					value={brandFilter}
 					onChange={(e) => setBrandFilter(e.target.value)}
-					className="mb-3 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+					className="mb-3 p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition dark:bg-gray-800 dark:text-white"
 				/>
 
+				<div className="mb-3 flex gap-2">
+					<Button
+						label="Seleziona tutto"
+						icon="pi pi-check-square"
+						className="p-button-outlined p-button-sm"
+						onClick={selectAllBrands}
+						disabled={Object.keys(brandSelection).length === 0}
+					/>
+					<Button
+						label="Deseleziona tutto"
+						icon="pi pi-stop"
+						className="p-button-outlined p-button-sm"
+						onClick={deselectAllBrands}
+						disabled={Object.keys(brandSelection).length === 0}
+					/>
+				</div>
+
 				<div
-					className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 border border-gray-200 bg-gray-50 p-3 rounded-lg shadow-inner"
+					className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg shadow-inner"
 					style={{
 						maxHeight: "calc(100vh - 300px)",
 						minHeight: "300px",
@@ -346,7 +391,7 @@ export default function App() {
 					}}
 				>
 					{filteredBrands.length === 0 && (
-						<div className="col-span-full text-gray-400 italic text-center py-4">
+						<div className="col-span-full text-gray-400 dark:text-gray-500 italic text-center py-4">
 							Nessuna marca trovata
 						</div>
 					)}
@@ -354,8 +399,10 @@ export default function App() {
 						<label
 							key={brand}
 							htmlFor={`brand-${brand}`}
-							className={`flex items-center gap-2 p-2 rounded cursor-pointer transition hover:bg-blue-50 ${
-								brandSelection[brand] ? "bg-blue-100 font-semibold" : ""
+							className={`flex items-center gap-2 p-2 rounded cursor-pointer transition hover:bg-blue-50 dark:hover:bg-gray-700 ${
+								brandSelection[brand]
+									? "bg-blue-100 dark:bg-blue-900 font-semibold"
+									: ""
 							}`}
 							style={filteredBrands.length <= 3 ? { minHeight: "48px" } : {}}
 						>
@@ -377,8 +424,6 @@ export default function App() {
 									setAndSavePreferredBrand(brand);
 								}}
 								aria-label="Imposta come preferita"
-								tooltip="Imposta come marca preferita"
-								tooltipOptions={{ position: "top" }}
 							/>
 							<Checkbox
 								id={`brand-${brand}`}
@@ -386,7 +431,9 @@ export default function App() {
 								checked={brandSelection[brand]}
 								className="mr-2"
 							/>
-							<span className="truncate flex-grow">{brand}</span>
+							<span className="truncate flex-grow dark:text-white">
+								{brand}
+							</span>
 						</label>
 					))}
 					{/* Filler per mantenere l'altezza minima se pochi risultati */}
