@@ -42,6 +42,7 @@ export default function App() {
 	const [brandSelection, setBrandSelection] = useState<Record<string, boolean>>(
 		{}
 	);
+	const [totalRowsCount, setTotalRowsCount] = useState(0);
 	const [uniqueRowsCount, setUniqueRowsCount] = useState(0);
 	const [preferredBrands, setPreferredBrands] = useState<string[]>(() => {
 		const saved = localStorage.getItem("preferredBrands");
@@ -103,15 +104,31 @@ export default function App() {
 				updatedLines.push(modifiedLine);
 			}
 
-			const uniqueSet = new Set<string>();
+			// Salva il conteggio totale prima della pulizia
+			setTotalRowsCount(parsed.length);
+
+			const seenCombinations = new Set<string>();
 			const uniqueRows: string[][] = [];
 
 			for (let row of parsed) {
-				const key = row.join("|");
-				if (!uniqueSet.has(key)) {
-					uniqueSet.add(key);
-					uniqueRows.push(row);
+				const marcaMetel = row[14]; // Marca Metel
+				const articoloMetel = row[15]; // Articolo Metel
+
+				// Se entrambi i campi sono non vuoti, crea una chiave univoca
+				if (marcaMetel && articoloMetel) {
+					const key = `${marcaMetel}|${articoloMetel}`;
+					
+					// Se questa combinazione è già stata vista, scarta la riga
+					if (seenCombinations.has(key)) {
+						continue;
+					}
+					
+					// Aggiungi la combinazione al set
+					seenCombinations.add(key);
 				}
+
+				// Mantieni la riga
+				uniqueRows.push(row);
 			}
 
 			setUniqueRowsCount(uniqueRows.length);
@@ -245,6 +262,18 @@ export default function App() {
 				if (Array.isArray(brands)) {
 					setPreferredBrands(brands);
 					localStorage.setItem("preferredBrands", JSON.stringify(brands));
+
+					// Seleziona automaticamente i brand importati se presenti nella lista
+					setBrandSelection((current) => {
+						const updated = { ...current };
+						brands.forEach((brand) => {
+							if (brand in updated) {
+								updated[brand] = true;
+							}
+						});
+						return updated;
+					});
+
 					alert("Marche preferite importate con successo!");
 				} else {
 					alert("Il file selezionato non contiene un formato valido");
@@ -292,6 +321,17 @@ export default function App() {
 			</div>
 
 			<div className="mb-6 flex flex-col sm:flex-row gap-4">
+				<div className="bg-purple-50 dark:bg-purple-900 border border-purple-200 dark:border-purple-700 rounded-lg p-4 flex-1 flex flex-col items-center shadow-sm">
+					<p className="text-purple-700 dark:text-purple-300 text-lg font-semibold flex items-center gap-2">
+						<span role="img" aria-label="Total">
+							📄
+						</span>
+						Righe totali (prima della pulizia):
+					</p>
+					<p className="text-3xl font-bold text-purple-900 dark:text-purple-100 mt-1">
+						{totalRowsCount}
+					</p>
+				</div>
 				<div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4 flex-1 flex flex-col items-center shadow-sm">
 					<p className="text-blue-700 dark:text-blue-300 text-lg font-semibold flex items-center gap-2">
 						<span role="img" aria-label="Unique">
