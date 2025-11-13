@@ -8,7 +8,7 @@ type Field = [string, start: number, end: number];
 
 const FIELDS: Field[] = [
 	["Codice numerico EV", 0, 13],
-	["Descrizione articolo", 44, 58],
+	["Descrizione articolo", 14, 58],
 	["Codice articolo EV", 58, 83],
 	["Marca EV", 83, 89],
 	["Unità di misura", 89, 91],
