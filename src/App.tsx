@@ -46,7 +46,119 @@ export default function App() {
 	const [uniqueRowsCount, setUniqueRowsCount] = useState(0);
 	const [preferredBrands, setPreferredBrands] = useState<string[]>(() => {
 		const saved = localStorage.getItem("preferredBrands");
-		return saved ? JSON.parse(saved) : [];
+		return saved
+			? JSON.parse(saved)
+			: [
+					"ZUC",
+					"WIE",
+					"WEI",
+					"ITW",
+					"VOR",
+					"VIW",
+					"VEM",
+					"VAA",
+					"HKH",
+					"BTI",
+					"THE",
+					"BTI",
+					"TLY",
+					"TEL",
+					"TTE",
+					"TEH",
+					"BEN",
+					"TCI",
+					"SYL",
+					"AAG",
+					"STB",
+					"SIE",
+					"SCA",
+					"SAT",
+					"RCO",
+					"MAD",
+					"RYT",
+					"RAU",
+					"RAD",
+					"QBX",
+					"QUT",
+					"PRI",
+					"PHI",
+					"PHB",
+					"PHA",
+					"PER",
+					"PER",
+					"PAN",
+					"PAL",
+					"OSR",
+					"V81",
+					"ORI",
+					"OER",
+					"OBO",
+					"MEG",
+					"NOL",
+					"IBO",
+					"MOE",
+					"MAG",
+					"LOM",
+					"LEN",
+					"LEG",
+					"LAR",
+					"RLC",
+					"l&l",
+					"KRT",
+					"KEB",
+					"UNF",
+					"KAT",
+					"KAO",
+					"ITC",
+					"IRM",
+					"INS",
+					"IND",
+					"ILN",
+					"IDX",
+					"FND",
+					"HEE",
+					"HAG",
+					"GTL",
+					"GEL",
+					"FTE",
+					"FRA",
+					"FOA",
+					"FIS",
+					"FIN",
+					"3FF",
+					"FMB",
+					"FAN",
+					"ELV",
+					"EMO",
+					"ELE",
+					"ELC",
+					"DRL",
+					"DIS",
+					"ECF",
+					"DTS",
+					"CV9",
+					"CV7",
+					"CV6",
+					"CV5",
+					"CV4",
+					"CV3",
+					"CV2",
+					"CV1",
+					"COR",
+					"COE",
+					"CEM",
+					"CEB",
+					"CCS",
+					"CVE",
+					"CVT",
+					"CAV",
+					"CMC",
+					"CBR",
+					"CAB",
+					"BOL",
+					"IBO",
+					"BEC",
+			  ];
 	});
 
 	function handleFileSelect(e: FileUploadSelectEvent) {
@@ -482,20 +594,24 @@ export default function App() {
 					className="mb-3 p-2 border border-gray-300 dark:border-gray-600 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition dark:bg-gray-800 dark:text-white"
 				/>
 
-				<div className="mb-3 flex gap-2">
+				<div className="mb-3 flex gap-4 justify-center items-center">
 					<Button
 						label="Seleziona tutto"
 						icon="pi pi-check-square"
-						className="p-button-outlined p-button-sm"
+						className="p-button-success p-button-lg"
 						onClick={selectAllBrands}
 						disabled={Object.keys(brandSelection).length === 0}
+						tooltip="Seleziona tutte le marche visibili"
+						tooltipOptions={{ position: "bottom" }}
 					/>
 					<Button
 						label="Deseleziona tutto"
-						icon="pi pi-stop"
-						className="p-button-outlined p-button-sm"
+						icon="pi pi-ban"
+						className="p-button-danger p-button-lg"
 						onClick={deselectAllBrands}
 						disabled={Object.keys(brandSelection).length === 0}
+						tooltip="Deseleziona tutte le marche visibili"
+						tooltipOptions={{ position: "bottom" }}
 					/>
 				</div>
 
